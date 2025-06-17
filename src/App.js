@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { initializeApp } from "firebase/app";
 import {
-  getDatabase,
-  ref,
-  set,
-  get,
-  remove
-} from "firebase/database";
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  getDocs,
+  deleteDoc,
+  updateDoc
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDREDpiCTsrljt-gZTNQMXoyqiM7JGM8bQ",
@@ -18,12 +20,12 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const db = getFirestore(app);
 
 const steps = [
   "ATT",
-  "NGÂM TK TRẮNG 3H SAU ĐÓ HUỆY",
-  "HUỆY TK XONG NGÂM ĐÓ 9-10 TIẾNG rỒi lên camp",
+  "NGÂM TK TRẮNG 3H SAU ĐÓ HUỶ",
+  "HUỶ TK XONG NGÂM ĐÓ 9-10 TIẾNG rồi lên camp",
   "NGÂM CAMP ĐÓ TẦM 12 TIẾNG RỒI LIÊN KẾT PARTNER",
   "TẦM 12 TIẾNG SAU THÌ KÍCH HOẠT TÀI KHOẢN"
 ];
@@ -39,58 +41,65 @@ export default function ProfileStepTracker() {
 
   useEffect(() => {
     const fetchProfiles = async () => {
-      const snapshot = await get(ref(db, "profiles"));
-      if (snapshot.exists()) {
-        setProfiles(snapshot.val());
-      }
+      const snapshot = await getDocs(collection(db, "profiles"));
+      const data = {};
+      snapshot.forEach((docSnap) => {
+        data[docSnap.id] = docSnap.data().steps;
+      });
+      setProfiles(data);
     };
     fetchProfiles();
   }, []);
 
-  const saveProfiles = (newProfiles) => {
-    setProfiles(newProfiles);
-    set(ref(db, "profiles"), newProfiles);
+  const saveProfile = async (name, stepsArray) => {
+    await setDoc(doc(db, "profiles", name), { steps: stepsArray });
   };
 
-  const handleCreateProfile = () => {
+  const handleCreateProfile = async () => {
     if (!profileName) return;
     const newProfiles = { ...profiles, [profileName]: Array(5).fill(null) };
-    saveProfiles(newProfiles);
+    setProfiles(newProfiles);
+    await saveProfile(profileName, newProfiles[profileName]);
     setCurrentProfile(profileName);
     setEditedProfileName(profileName);
     setIsEditingName(false);
   };
 
-  const handleClickStep = (index) => {
+  const handleClickStep = async (index) => {
     if (!currentProfile) return;
     const updatedSteps = [...profiles[currentProfile]];
     if (!updatedSteps[index]) {
       updatedSteps[index] = new Date().toISOString();
       const newProfiles = { ...profiles, [currentProfile]: updatedSteps };
-      saveProfiles(newProfiles);
+      setProfiles(newProfiles);
+      await saveProfile(currentProfile, updatedSteps);
     }
   };
 
-  const handleRenameProfile = () => {
+  const handleRenameProfile = async () => {
     if (!currentProfile || !editedProfileName.trim()) return;
     if (profiles[editedProfileName]) {
       alert("Tên profile mới đã tồn tại!");
       return;
     }
+    const updatedSteps = profiles[currentProfile];
+    await setDoc(doc(db, "profiles", editedProfileName), { steps: updatedSteps });
+    await deleteDoc(doc(db, "profiles", currentProfile));
     const updatedProfiles = { ...profiles };
-    updatedProfiles[editedProfileName] = profiles[currentProfile];
     delete updatedProfiles[currentProfile];
-    saveProfiles(updatedProfiles);
+    updatedProfiles[editedProfileName] = updatedSteps;
+    setProfiles(updatedProfiles);
     setCurrentProfile(editedProfileName);
     setEditedProfileName(editedProfileName);
     setIsEditingName(false);
   };
 
-  const handleDeleteProfile = (name) => {
+  const handleDeleteProfile = async (name) => {
     if (!window.confirm(`Xoá profile "${name}"?`)) return;
+    await deleteDoc(doc(db, "profiles", name));
     const updatedProfiles = { ...profiles };
     delete updatedProfiles[name];
-    saveProfiles(updatedProfiles);
+    setProfiles(updatedProfiles);
     if (name === currentProfile) {
       setCurrentProfile(null);
       setEditedProfileName("");
