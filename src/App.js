@@ -47,36 +47,44 @@ export default function ProfileStepTracker() {
   };
 
   return (
-    <div className="p-4 max-w-xl mx-auto space-y-4">
-      <h1 className="text-xl font-bold">Trình tự thao tác Profile</h1>
-
-      <div className="flex gap-2">
+    <div className="p-4 max-w-xl mx-auto space-y-6 font-sans text-gray-800">
+      <h1 className="text-2xl font-bold text-blue-700">Trình tự thao tác Profile</h1>
+  
+      <div className="flex gap-3">
         <input
           type="text"
           placeholder="Nhập tên profile"
-          className="border p-2 flex-grow rounded"
+          className="border border-gray-400 p-2 flex-grow rounded-md"
           value={profileName}
           onChange={(e) => setProfileName(e.target.value)}
         />
-        <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleCreateProfile}>
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+          onClick={handleCreateProfile}
+        >
           Tạo / Chọn
         </button>
       </div>
-
+  
       {currentProfile && (
         <div className="space-y-3">
-          <h2 className="font-semibold">Profile: {currentProfile}</h2>
+          <h2 className="font-semibold text-lg text-green-700">Profile: <span className="text-black">{currentProfile}</span></h2>
           {steps.map((step, index) => (
             <div key={index} className="flex items-center gap-4">
               <button
-                className={`px-3 py-2 rounded border ${profiles[currentProfile][index] ? "bg-green-200" : "bg-gray-200"}`}
+                disabled={!!profiles[currentProfile][index]}
+                className={`px-3 py-2 rounded-md border text-sm min-w-[70px] ${
+                  profiles[currentProfile][index]
+                    ? "bg-green-200 text-green-800 cursor-not-allowed"
+                    : "bg-gray-100 hover:bg-gray-200"
+                }`}
                 onClick={() => handleClickStep(index)}
               >
                 Bước {index + 1}
               </button>
-              <span>{step}</span>
+              <span className="flex-grow">{step}</span>
               {profiles[currentProfile][index] && (
-                <span className="text-sm text-gray-700">
+                <span className="text-xs text-gray-600">
                   {formatTime(new Date(profiles[currentProfile][index]))}
                 </span>
               )}
@@ -85,15 +93,17 @@ export default function ProfileStepTracker() {
           ))}
         </div>
       )}
-
+  
       {Object.keys(profiles).length > 0 && (
         <div>
-          <h3 className="mt-6 font-semibold">Chọn profile đã tạo:</h3>
+          <h3 className="mt-6 font-semibold text-base">Chọn profile đã tạo:</h3>
           <div className="flex flex-wrap gap-2 mt-2">
             {Object.keys(profiles).map((name) => (
               <button
                 key={name}
-                className={`px-3 py-1 border rounded ${currentProfile === name ? "bg-blue-100" : "bg-gray-100"}`}
+                className={`px-3 py-1 border rounded-md text-sm ${
+                  currentProfile === name ? "bg-blue-100" : "bg-gray-100"
+                }`}
                 onClick={() => setCurrentProfile(name)}
               >
                 {name}
@@ -104,4 +114,5 @@ export default function ProfileStepTracker() {
       )}
     </div>
   );
+  
 }
