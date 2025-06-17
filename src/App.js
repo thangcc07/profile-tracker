@@ -1,9 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { initializeApp } from "firebase/app";
+import {
+  getDatabase,
+  ref,
+  set,
+  get,
+  update,
+  remove,
+  child
+} from "firebase/database";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDREDpiCTsrljt-gZTNQMXoyqiM7JGM8bQ",
+  authDomain: "profile-tracker-aba67.firebaseapp.com",
+  projectId: "profile-tracker-aba67",
+  storageBucket: "profile-tracker-aba67.firebasestorage.app",
+  messagingSenderId: "300333519127",
+  appId: "1:300333519127:web:a9e61d0b4b25f52daa6752"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 const steps = [
   "ATT",
   "NGÂM TK TRẮNG 3H SAU ĐÓ HUỆY",
-  "HUỶ TK XONG NGÂM ĐÓ 9-10 TIẾNG rỒi lên camp",
+  "HUỆY TK XONG NGÂM ĐÓ 9-10 TIẾNG rỒi lên camp",
   "NGÂM CAMP ĐÓ TẦM 12 TIẾNG RỒI LIÊN KẾT PARTNER",
   "TẦM 12 TIẾNG SAU THÌ KÍCH HOẠT TÀI KHOẢN"
 ];
@@ -14,17 +36,28 @@ export default function ProfileStepTracker() {
   const [profileName, setProfileName] = useState("");
   const [editedProfileName, setEditedProfileName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
-  const [profiles, setProfiles] = useState(() => {
-    const saved = localStorage.getItem("profiles");
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [profiles, setProfiles] = useState({});
   const [currentProfile, setCurrentProfile] = useState(null);
+
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      const snapshot = await get(ref(db, "profiles"));
+      if (snapshot.exists()) {
+        setProfiles(snapshot.val());
+      }
+    };
+    fetchProfiles();
+  }, []);
+
+  const saveProfiles = (newProfiles) => {
+    setProfiles(newProfiles);
+    set(ref(db, "profiles"), newProfiles);
+  };
 
   const handleCreateProfile = () => {
     if (!profileName) return;
     const newProfiles = { ...profiles, [profileName]: Array(5).fill(null) };
-    setProfiles(newProfiles);
-    localStorage.setItem("profiles", JSON.stringify(newProfiles));
+    saveProfiles(newProfiles);
     setCurrentProfile(profileName);
     setEditedProfileName(profileName);
     setIsEditingName(false);
@@ -36,8 +69,7 @@ export default function ProfileStepTracker() {
     if (!updatedSteps[index]) {
       updatedSteps[index] = new Date().toISOString();
       const newProfiles = { ...profiles, [currentProfile]: updatedSteps };
-      setProfiles(newProfiles);
-      localStorage.setItem("profiles", JSON.stringify(newProfiles));
+      saveProfiles(newProfiles);
     }
   };
 
@@ -50,8 +82,7 @@ export default function ProfileStepTracker() {
     const updatedProfiles = { ...profiles };
     updatedProfiles[editedProfileName] = profiles[currentProfile];
     delete updatedProfiles[currentProfile];
-    setProfiles(updatedProfiles);
-    localStorage.setItem("profiles", JSON.stringify(updatedProfiles));
+    saveProfiles(updatedProfiles);
     setCurrentProfile(editedProfileName);
     setEditedProfileName(editedProfileName);
     setIsEditingName(false);
