@@ -2,8 +2,8 @@ import React, { useState } from "react";
 
 const steps = [
   "ATT",
-  "NGÂM TK TRẮNG 3H SAU ĐÓ HUỶ",
-  "HUỶ TK XONG NGÂM ĐÓ 9-10 TIẾNG rồi lên camp",
+  "NGÂM TK TRẮNG 3H SAU ĐÓ HUỆY",
+  "HUỶ TK XONG NGÂM ĐÓ 9-10 TIẾNG rỒi lên camp",
   "NGÂM CAMP ĐÓ TẦM 12 TIẾNG RỒI LIÊN KẾT PARTNER",
   "TẦM 12 TIẾNG SAU THÌ KÍCH HOẠT TÀI KHOẢN"
 ];
@@ -12,11 +12,12 @@ const formatTime = (date) => date.toLocaleString("vi-VN", { timeZone: "Asia/Ho_C
 
 export default function ProfileStepTracker() {
   const [profileName, setProfileName] = useState("");
+  const [editedProfileName, setEditedProfileName] = useState("");
+  const [isEditingName, setIsEditingName] = useState(false);
   const [profiles, setProfiles] = useState(() => {
     const saved = localStorage.getItem("profiles");
     return saved ? JSON.parse(saved) : {};
   });
-
   const [currentProfile, setCurrentProfile] = useState(null);
 
   const handleCreateProfile = () => {
@@ -25,6 +26,8 @@ export default function ProfileStepTracker() {
     setProfiles(newProfiles);
     localStorage.setItem("profiles", JSON.stringify(newProfiles));
     setCurrentProfile(profileName);
+    setEditedProfileName(profileName);
+    setIsEditingName(false);
   };
 
   const handleClickStep = (index) => {
@@ -38,26 +41,40 @@ export default function ProfileStepTracker() {
     }
   };
 
+  const handleRenameProfile = () => {
+    if (!currentProfile || !editedProfileName.trim()) return;
+    if (profiles[editedProfileName]) {
+      alert("Tên profile mới đã tồn tại!");
+      return;
+    }
+    const updatedProfiles = { ...profiles };
+    updatedProfiles[editedProfileName] = profiles[currentProfile];
+    delete updatedProfiles[currentProfile];
+    setProfiles(updatedProfiles);
+    localStorage.setItem("profiles", JSON.stringify(updatedProfiles));
+    setCurrentProfile(editedProfileName);
+    setEditedProfileName(editedProfileName);
+    setIsEditingName(false);
+  };
+
   const renderTimeDiff = (index) => {
     const stepsData = profiles[currentProfile];
     if (index === 0 || !stepsData[index] || !stepsData[index - 1]) return null;
-  
     const diffMs = new Date(stepsData[index]) - new Date(stepsData[index - 1]);
     const totalMinutes = Math.floor(diffMs / 60000);
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-  
     return (
       <span className="text-sm text-purple-600 ml-2">
         (cách {hours > 0 ? `${hours} giờ ` : ""}{minutes} phút)
       </span>
     );
   };
-  
+
   return (
     <div className="p-4 max-w-xl mx-auto space-y-6 font-sans text-gray-800">
       <h1 className="text-2xl font-bold text-blue-700">Trình tự thao tác Profile</h1>
-  
+
       <div className="flex gap-3">
         <input
           type="text"
@@ -73,43 +90,74 @@ export default function ProfileStepTracker() {
           Tạo / Chọn
         </button>
       </div>
-  
+
       {currentProfile && (
         <div className="space-y-3">
-          <h2 className="font-semibold text-lg text-green-700">Profile: <span className="text-black">{currentProfile}</span></h2>
+          <div className="flex items-center gap-2 font-semibold text-lg text-green-700">
+            <span>Profile:</span>
+            {isEditingName ? (
+              <>
+                <input
+                  className="border rounded px-2 py-1 text-base"
+                  value={editedProfileName}
+                  onChange={(e) => setEditedProfileName(e.target.value)}
+                />
+                <button
+                  onClick={handleRenameProfile}
+                  className="text-sm px-3 py-1 bg-yellow-400 hover:bg-yellow-500 rounded text-white"
+                >
+                  Lưu
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="text-black text-base">{currentProfile}</span>
+                <button
+                  onClick={() => {
+                    setEditedProfileName(currentProfile);
+                    setIsEditingName(true);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                  title="Đổi tên profile"
+                >
+                  ✏️
+                </button>
+              </>
+            )}
+          </div>
+
           {steps.map((step, index) => (
-  <div
-    key={index}
-    className="grid grid-cols-12 gap-3 items-center border-b pb-2 mb-2"
-  >
-    <button
-      disabled={!!profiles[currentProfile][index]}
-      className={`col-span-1 px-3 py-2 rounded-md text-sm ${
-        profiles[currentProfile][index]
-          ? "bg-green-200 text-green-800 cursor-not-allowed"
-          : "bg-gray-100 hover:bg-gray-200"
-      }`}
-      onClick={() => handleClickStep(index)}
-    >
-      Bước {index + 1}
-    </button>
+            <div
+              key={index}
+              className="grid grid-cols-12 gap-3 items-center border-b pb-2 mb-2"
+            >
+              <button
+                disabled={!!profiles[currentProfile][index]}
+                className={`col-span-1 px-3 py-2 rounded-md text-sm ${
+                  profiles[currentProfile][index]
+                    ? "bg-green-200 text-green-800 cursor-not-allowed"
+                    : "bg-gray-100 hover:bg-gray-200"
+                }`}
+                onClick={() => handleClickStep(index)}
+              >
+                Bước {index + 1}
+              </button>
 
-    <span className="col-span-6">{step}</span>
+              <span className="col-span-6">{step}</span>
 
-    <div className="col-span-5 text-xs text-right">
-      {profiles[currentProfile][index] && (
-        <div className="text-gray-600">
-          {formatTime(new Date(profiles[currentProfile][index]))}
+              <div className="col-span-5 text-xs text-right">
+                {profiles[currentProfile][index] && (
+                  <div className="text-gray-600">
+                    {formatTime(new Date(profiles[currentProfile][index]))}
+                  </div>
+                )}
+                {renderTimeDiff(index)}
+              </div>
+            </div>
+          ))}
         </div>
       )}
-      {renderTimeDiff(index)}
-    </div>
-  </div>
-))}
 
-        </div>
-      )}
-  
       {Object.keys(profiles).length > 0 && (
         <div>
           <h3 className="mt-6 font-semibold text-base">Chọn profile đã tạo:</h3>
@@ -120,7 +168,11 @@ export default function ProfileStepTracker() {
                 className={`px-3 py-1 border rounded-md text-sm ${
                   currentProfile === name ? "bg-blue-100" : "bg-gray-100"
                 }`}
-                onClick={() => setCurrentProfile(name)}
+                onClick={() => {
+                  setCurrentProfile(name);
+                  setEditedProfileName(name);
+                  setIsEditingName(false);
+                }}
               >
                 {name}
               </button>
@@ -130,5 +182,4 @@ export default function ProfileStepTracker() {
       )}
     </div>
   );
-  
 }
