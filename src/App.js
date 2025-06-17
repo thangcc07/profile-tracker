@@ -41,11 +41,19 @@ export default function ProfileStepTracker() {
   const renderTimeDiff = (index) => {
     const stepsData = profiles[currentProfile];
     if (index === 0 || !stepsData[index] || !stepsData[index - 1]) return null;
-    const diff =
-      (new Date(stepsData[index]) - new Date(stepsData[index - 1])) / 3600000;
-    return <span className="ml-2 text-sm text-blue-600">(+{diff.toFixed(2)}h)</span>;
+  
+    const diffMs = new Date(stepsData[index]) - new Date(stepsData[index - 1]);
+    const totalMinutes = Math.floor(diffMs / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+  
+    return (
+      <span className="text-sm text-purple-600 ml-2">
+        (cách {hours > 0 ? `${hours} giờ ` : ""}{minutes} phút)
+      </span>
+    );
   };
-
+  
   return (
     <div className="p-4 max-w-xl mx-auto space-y-6 font-sans text-gray-800">
       <h1 className="text-2xl font-bold text-blue-700">Trình tự thao tác Profile</h1>
@@ -70,27 +78,35 @@ export default function ProfileStepTracker() {
         <div className="space-y-3">
           <h2 className="font-semibold text-lg text-green-700">Profile: <span className="text-black">{currentProfile}</span></h2>
           {steps.map((step, index) => (
-            <div key={index} className="flex items-center gap-4">
-              <button
-                disabled={!!profiles[currentProfile][index]}
-                className={`px-3 py-2 rounded-md border text-sm min-w-[70px] ${
-                  profiles[currentProfile][index]
-                    ? "bg-green-200 text-green-800 cursor-not-allowed"
-                    : "bg-gray-100 hover:bg-gray-200"
-                }`}
-                onClick={() => handleClickStep(index)}
-              >
-                Bước {index + 1}
-              </button>
-              <span className="flex-grow">{step}</span>
-              {profiles[currentProfile][index] && (
-                <span className="text-xs text-gray-600">
-                  {formatTime(new Date(profiles[currentProfile][index]))}
-                </span>
-              )}
-              {renderTimeDiff(index)}
-            </div>
-          ))}
+  <div
+    key={index}
+    className="grid grid-cols-12 gap-3 items-center border-b pb-2 mb-2"
+  >
+    <button
+      disabled={!!profiles[currentProfile][index]}
+      className={`col-span-1 px-3 py-2 rounded-md text-sm ${
+        profiles[currentProfile][index]
+          ? "bg-green-200 text-green-800 cursor-not-allowed"
+          : "bg-gray-100 hover:bg-gray-200"
+      }`}
+      onClick={() => handleClickStep(index)}
+    >
+      Bước {index + 1}
+    </button>
+
+    <span className="col-span-6">{step}</span>
+
+    <div className="col-span-5 text-xs text-right">
+      {profiles[currentProfile][index] && (
+        <div className="text-gray-600">
+          {formatTime(new Date(profiles[currentProfile][index]))}
+        </div>
+      )}
+      {renderTimeDiff(index)}
+    </div>
+  </div>
+))}
+
         </div>
       )}
   
