@@ -5,9 +5,7 @@ import {
   ref,
   set,
   get,
-  update,
-  remove,
-  child
+  remove
 } from "firebase/database";
 
 const firebaseConfig = {
@@ -86,6 +84,32 @@ export default function ProfileStepTracker() {
     setCurrentProfile(editedProfileName);
     setEditedProfileName(editedProfileName);
     setIsEditingName(false);
+  };
+
+  const handleDeleteProfile = (name) => {
+    if (!window.confirm(`Xoá profile "${name}"?`)) return;
+    const updatedProfiles = { ...profiles };
+    delete updatedProfiles[name];
+    saveProfiles(updatedProfiles);
+    if (name === currentProfile) {
+      setCurrentProfile(null);
+      setEditedProfileName("");
+      setIsEditingName(false);
+    }
+  };
+
+  const handleExportProfile = (name) => {
+    const profileData = profiles[name];
+    let content = `Tên profile: ${name}\n\n`;
+    profileData.forEach((timestamp, index) => {
+      const timeStr = timestamp ? formatTime(new Date(timestamp)) : "(chưa thực hiện)";
+      content += `Bước ${index + 1}: ${steps[index]}\nThời gian: ${timeStr}\n\n`;
+    });
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${name}.txt`;
+    link.click();
   };
 
   const renderTimeDiff = (index) => {
@@ -186,6 +210,13 @@ export default function ProfileStepTracker() {
               </div>
             </div>
           ))}
+
+          <button
+            onClick={() => handleExportProfile(currentProfile)}
+            className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-sm border"
+          >
+            Xuất file TXT
+          </button>
         </div>
       )}
 
@@ -194,19 +225,27 @@ export default function ProfileStepTracker() {
           <h3 className="mt-6 font-semibold text-base">Chọn profile đã tạo:</h3>
           <div className="flex flex-wrap gap-2 mt-2">
             {Object.keys(profiles).map((name) => (
-              <button
-                key={name}
-                className={`px-3 py-1 border rounded-md text-sm ${
-                  currentProfile === name ? "bg-blue-100" : "bg-gray-100"
-                }`}
-                onClick={() => {
-                  setCurrentProfile(name);
-                  setEditedProfileName(name);
-                  setIsEditingName(false);
-                }}
-              >
-                {name}
-              </button>
+              <div key={name} className="flex items-center gap-2">
+                <button
+                  className={`px-3 py-1 border rounded-md text-sm ${
+                    currentProfile === name ? "bg-blue-100" : "bg-gray-100"
+                  }`}
+                  onClick={() => {
+                    setCurrentProfile(name);
+                    setEditedProfileName(name);
+                    setIsEditingName(false);
+                  }}
+                >
+                  {name}
+                </button>
+                <button
+                  onClick={() => handleDeleteProfile(name)}
+                  className="text-red-500 hover:text-red-700 text-xs"
+                  title="Xoá profile"
+                >
+                  Xóa
+                </button>
+              </div>
             ))}
           </div>
         </div>
