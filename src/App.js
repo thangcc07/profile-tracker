@@ -69,7 +69,7 @@ export default function ProfileStepTracker() {
           {steps.map((step, index) => (
             <div key={index} className="flex items-center gap-4">
               <button
-                className={\`px-3 py-2 rounded border \${profiles[currentProfile][index] ? "bg-green-200" : "bg-gray-200"}\`}
+                className={`px-3 py-2 rounded border ${profiles[currentProfile][index] ? "bg-green-200" : "bg-gray-200"}`}
                 onClick={() => handleClickStep(index)}
               >
                 Bước {index + 1}
@@ -93,7 +93,7 @@ export default function ProfileStepTracker() {
             {Object.keys(profiles).map((name) => (
               <button
                 key={name}
-                className={\`px-3 py-1 border rounded \${currentProfile === name ? "bg-blue-100" : "bg-gray-100"}\`}
+                className={`px-3 py-1 border rounded ${currentProfile === name ? "bg-blue-100" : "bg-gray-100"}`}
                 onClick={() => setCurrentProfile(name)}
               >
                 {name}
